@@ -1,0 +1,69 @@
+---
+  - name: docker and jdk11 setup
+    hosts: server_name_ubuntu
+    gather_facts: false
+    become: true
+    tasks:
+      - name: update system
+        apt:
+          update_cache: true
+
+      - name: docker setup
+        apt:
+          pkg:
+            - apt-transport-https
+            - ca-certificates
+            - curl
+            - gnupg
+            - lsb-release
+          state: latest
+          update_cache: true
+
+      - name: Docker official GPG key
+        apt_key:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          state: present
+
+      - name: Add Docker Repository
+        apt_repository:
+          repo: deb https://download.docker.com/linux/ubuntu bionic stable
+          state: present
+      
+      - name: docker installation
+        apt: 
+          name:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+            - docker-compose-plugin
+          state: present
+
+      - name: docker-compose installation
+        get_url:
+          url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+          dest: /usr/local/bin/docker-compose
+          mode: 'u+x,g+x'
+
+      - name: jdk11 installation
+        apt: 
+          name: openjdk-11-jdk
+          state: present
+          update_cache: true
+
+      - name: creating prometheus directory
+        file:
+          path: /tmp/prometheus
+          state: directory
+
+      - name: moving prometheus.yml
+        copy: 
+          src: /home/ubuntu/prometheus.yml
+          dest: /tmp/prometheus/prometheus.yml
+      
+      - name: moving docker-compose.yaml
+        copy: 
+          src: /home/ubuntu/docker-compose.yaml
+          dest: /home/ubuntu/docker-compose.yaml
+
+      - name: initiating docker-compose
+        shell: docker-compose up -d

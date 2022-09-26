@@ -1,0 +1,3 @@
+*.hcl
+docker-stack.yaml
+.terraform

@@ -1,0 +1,56 @@
+---
+  version: "3.9"
+  services:
+    jenkins:
+      image: jenkins/jenkins:lts
+      user: root
+      privileged: true
+      networks:
+        - testnetwork
+      ports:
+        - 8080:8080
+        - 50000:50000
+      volumes:
+        - jenkinsvol:/var/jenkins_home
+        - jenkins-docker-certs:/certs/client:ro
+        - /var/run/docker.sock:/var/run/docker.sock
+      environment:
+        DOCKER_HOST: tcp://docker:2376
+        DOCKER_CERT_PATH: /certs/client
+        DOCKER_TLS_VERIFY: 1
+    prometheus:
+      image: prom/prometheus:latest
+      ports:
+        - 9090:9090
+      networks:
+        - testnetwork
+      command:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+      volumes:
+        - /tmp/prometheus/prometheus.yml:/tmp/prometheus/prometheus.yml
+    grafana:
+      image: grafana/grafana
+      user: root
+      depends_on:
+        - prometheus
+      networks:
+        - testnetwork
+      ports:
+        - 3000:3000
+      volumes:
+        - grafanavol:/var/lib/grafana
+        - grafana_config:/tmp/grafana
+  
+  networks:
+    testnetwork:
+      external: false
+  
+  volumes:
+    jenkinsvol:
+      driver: local
+    jenkins-docker-certs:
+      driver: local
+    grafanavol:
+      driver: local
+    grafana_config:
+      driver: local
